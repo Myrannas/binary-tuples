@@ -1,0 +1,11 @@
+[package]
+name = "binary_tuples"
+version = "0.1.0"
+authors = ["michael <michael.stephen.oates@gmail.com>"]
+
+[dependencies]
+byteorder = "1.2.1"
+
+[dependencies.uuid]
+version = "0.6"
+features = ["v4"]
