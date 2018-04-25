@@ -260,7 +260,7 @@ impl Segment {
         return Ok((segments, index))
     }
 
-    pub(crate) pub fn decode(input: &[u8]) -> Result<Vec<Segment>, TupleError> {
+    pub(crate) fn decode(input: &[u8]) -> Result<Vec<Segment>, TupleError> {
         let ( segments, read ) = Segment::decode_segments(input)?;
 
         if read != input.len() {
