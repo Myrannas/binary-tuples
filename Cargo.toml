@@ -2,6 +2,7 @@
 name = "binary_tuples"
 version = "0.1.0"
 authors = ["michael <michael.stephen.oates@gmail.com>"]
+license="MIT"
 
 [dependencies]
 byteorder = "1.2.1"
