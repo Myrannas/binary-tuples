@@ -35,7 +35,7 @@ impl Tuple {
     ///
     /// This can be used with `as_segments` to parse an existing tuple into a list of segments
     ///
-    /// Examples
+    /// # Examples
     /// ```
     /// use binary_tuples::{Tuple, segment::Segment};
     ///
@@ -93,7 +93,7 @@ pub trait AddToTuple<T> where Self : Sized {
 
     /// A fluent interface for adding a new segment to a tuple
     ///
-    /// Examples
+    /// # Examples
     /// ```
     /// use binary_tuples::*;
     ///
