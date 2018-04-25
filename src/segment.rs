@@ -6,6 +6,10 @@ use std;
 use uuid::Uuid;
 
 #[derive(Clone, PartialEq, Debug)]
+/// An individual segment within a binary tuple
+///
+/// These are intended for matching against when parsing an existing binary tuple -
+/// when actually creating a tuple most of the existing methods should work for this (see `AddToTuple`).
 pub enum Segment {
     Bytes(Vec<u8>),
     String(String),

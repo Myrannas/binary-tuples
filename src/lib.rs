@@ -17,28 +17,43 @@ pub struct Tuple {
 }
 
 impl Tuple {
-    /// Create a new tuple builder
+    /// Create a new tuple
     pub fn new() -> Tuple {
         Tuple {
             buffer: Vec::with_capacity(128)
         }
     }
 
-    /// Create a new tuple builder with a fixed backing capacitys
+    /// Create a new tuple with a fixed backing capacity
     pub fn with_capacity(capacity: usize) -> Tuple {
         Tuple {
             buffer: Vec::with_capacity(capacity)
         }
     }
 
-    /// Create a new tuple builder from an existing byte array
+    /// Create a new tuple from an existing byte array
+    ///
+    /// This can be used with `as_segments` to parse an existing tuple into a list of segments
+    ///
+    /// Examples
+    /// ```
+    /// use binary_tuples::{Tuple, segment::Segment};
+    ///
+    /// let binary = vec![2, 117, 115, 101, 114, 115, 0, 21, 1];
+    ///
+    /// let tuple = Tuple::from_bytes(&binary)
+    ///     .as_segments()
+    ///     .unwrap();
+    ///
+    /// assert_eq!(tuple, vec![Segment::String(String::from("users")), Segment::Integer(1)]);
+    /// ```
     pub fn from_bytes(bytes: &[u8]) -> Tuple {
         Tuple {
             buffer: Vec::from(bytes)
         }
     }
 
-    /// Add an individual segment to this tuple builder.
+    /// Add an individual segment to this tuple.
     ///
     /// ## Notes
     /// It is recommended to import AddToTuple as it greatly simplifies this API
@@ -70,9 +85,27 @@ impl Tuple {
     }
 }
 
+/// An extension trait to simplify working with segments
 pub trait AddToTuple<T> where Self : Sized {
+
+    /// Add a new segment to a tuple
     fn add(&mut self, input: T);
 
+    /// A fluent interface for adding a new segment to a tuple
+    ///
+    /// Examples
+    /// ```
+    /// use binary_tuples::*;
+    ///
+    /// let user_1 = 1;
+    ///
+    /// let tuple = Tuple::new()
+    ///     .with("users")
+    ///     .with(user_1)
+    ///     .into_bytes();
+    ///
+    /// assert_eq!(tuple, vec![2, 117, 115, 101, 114, 115, 0, 21, 1]);
+    /// ```
     fn with(mut self, input: T) -> Self {
         self.add(input);
 
@@ -89,6 +122,18 @@ impl AddToTuple<i64> for Tuple {
 impl AddToTuple<String> for Tuple {
     fn add(&mut self, v: String) {
         self.add_segment(&Segment::String(v));
+    }
+}
+
+impl<'a> AddToTuple<&'a [u8]> for Tuple {
+    fn add(&mut self, v: &'a [u8]) {
+        self.add_segment(&Segment::Bytes(Vec::from(v)));
+    }
+}
+
+impl<'a> AddToTuple<&'a Vec<u8>> for Tuple {
+    fn add(&mut self, v: &'a Vec<u8>) {
+        self.add_segment(&Segment::Bytes(v.clone()));
     }
 }
 
@@ -141,15 +186,36 @@ impl AddToTuple<Tuple> for Tuple {
 }
 
 #[macro_export]
-/**
- * A macro for creating a serialized tuple builder
- *
- * Supports all types of segments as plain values - these are wrapped in TupleSegments before
- * being serialized.
- *
- * Note: calling `tuple!(tuple!())` does not create a nested tuple - nested tuples are not supported in the
- *      public api yet.
- */
+/// A macro for creating a serialized tuple
+///
+/// Supports all types of segments as plain values - these are wrapped in TupleSegments before
+/// being serialized.
+/// The easiest way to create tuples is using the exposed `tuple!` macro:
+///
+///```
+/// #[macro_use] extern crate binary_tuples;
+/// let user_id = 1;
+/// let value = tuple!("users", user_id, "posts");
+///
+/// // Returns as a byte array
+/// let bytes = value.into_bytes();
+///```
+///
+/// Tuples can reused as efficient prefixes for other tuples
+/// ```
+/// #[macro_use] extern crate binary_tuples;
+///
+/// let user_id = 1;
+/// let post_id_1 = 1;
+/// let post_id_2 = 2;
+/// let users_tuple = tuple!("users", user_id, "posts");
+///
+/// let post_1 = tuple!(&users_tuple, post_id_1);
+/// let post_2 = tuple!(&users_tuple, post_id_2);
+///
+/// assert_eq!(post_1.into_bytes(), vec![2, 117, 115, 101, 114, 115, 0, 21, 1, 2, 112, 111, 115, 116, 115, 0, 21, 1]);
+/// assert_eq!(post_2.into_bytes(), vec![2, 117, 115, 101, 114, 115, 0, 21, 1, 2, 112, 111, 115, 116, 115, 0, 21, 2]);
+/// ```
 macro_rules! tuple {
     ($( $x:expr ),*) => {
         {
@@ -179,5 +245,20 @@ mod tests {
         let result = tuple!(&base_tuple, "Test");
 
         assert_eq!(result.into_bytes(), vec![2, 117, 115, 101, 114, 0, 2, 84, 101, 115, 116, 0]);
+    }
+
+    #[test]
+    fn test_vec_support() {
+        let tuple = tuple!(vec![1, 2, 3]);
+
+        assert_eq!(tuple.into_bytes(), vec![1, 1, 2, 3, 0]);
+    }
+
+    #[test]
+    fn test_u8_support() {
+        let binary: Vec<u8> = vec![1, 2, 3];
+        let tuple = tuple!(&binary);
+
+        assert_eq!(tuple.into_bytes(), vec![1, 1, 2, 3, 0]);
     }
 }
