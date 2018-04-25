@@ -1,6 +1,6 @@
 [package]
 name = "binary_tuples"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["michael <michael.stephen.oates@gmail.com>"]
 license="MIT"
 description="Ordered binary tuple implementation for rust based upon and compatible with FoundationDB tuples"
